@@ -1,0 +1,9 @@
+services:
+  database:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: feature-flags-backend
+      POSTGRES_PASSWORD: feature-flags-backend
+      POSTGRES_DB: feature-flags-backend
+    ports:
+      - "5432:5432"
