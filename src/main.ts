@@ -15,6 +15,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Feature Flags API')
     .setDescription('The Feature Flags API')
+    .addBearerAuth()
     .setVersion('1.0')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
