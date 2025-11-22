@@ -15,6 +15,7 @@ import { ProjectMembership } from './entities';
     ]),
   ],
   controllers: [ProjectsController],
-  providers: [ProjectsService]
+  providers: [ProjectsService],
+  exports: [ProjectsService],
 })
 export class ProjectsModule { }
