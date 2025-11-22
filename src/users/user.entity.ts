@@ -1,14 +1,13 @@
 import { Entity, EntityRepositoryType, PrimaryKey, Property } from "@mikro-orm/core";
-import { UsersRepository } from "./users.repository";
 
-@Entity({ repository: () => UsersRepository })
+@Entity()
 export class User {
-    // to allow inference in `em.getRepository()`
-    [EntityRepositoryType]?: UsersRepository;
-
     @PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
     id!: string;
 
-    @Property()
+    @Property({ unique: true })
     email!: string;
+
+    @Property({name: 'password_hash'})
+    passwordHash!: string;
 }
