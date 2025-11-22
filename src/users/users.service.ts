@@ -10,10 +10,19 @@ import { EntityManager } from '@mikro-orm/core';
 @Injectable()
 export class UsersService {
     constructor(
-         @InjectRepository(User)
+        @InjectRepository(User)
         private readonly usersRepository: EntityRepository<User>,
         private readonly entityManager: EntityManager,
     ) { }
+
+    /**
+     * Find a user by their ID.
+     * @param id the ID of the user to find
+     * @returns the user if found, null otherwise
+     */
+    async findUserById(id: string): Promise<User | null> {
+        return this.usersRepository.findOne({ id });
+    }
 
     /**
      * Find a user by their email address.
