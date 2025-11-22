@@ -11,6 +11,12 @@ export class ProjectsService {
         private readonly entityManager: EntityManager,
     ) { }
 
+    /**
+     * Create a new project
+     * @param name name of the project to create
+     * @param userId the ID of the user creating the project
+     * @returns the newly created project
+     */
     async createProject(name: string, userId: string): Promise<Project> {
         const project = this.projectsRepository.create({
             name,
