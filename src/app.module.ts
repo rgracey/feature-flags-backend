@@ -5,15 +5,19 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { ProjectsModule } from './projects/projects.module';
 import { EnvironmentsModule } from './environments/environments.module';
+import { FeatureFlagsModule } from './feature-flags/feature-flags.module';
+import { AuthorisationModule } from './authorisation/authorisation.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     MikroOrmModule.forRoot({}),
+    AuthorisationModule,
     UsersModule,
     AuthModule,
     ProjectsModule,
     EnvironmentsModule,
+    FeatureFlagsModule,
   ],
   controllers: [],
   providers: [],

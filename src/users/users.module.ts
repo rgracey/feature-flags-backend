@@ -8,7 +8,7 @@ import { AuthModule } from 'src/auth/auth.module';
 @Module({
   imports: [
     MikroOrmModule.forFeature([User]),
-    forwardRef(() => AuthModule)
+    forwardRef(() => AuthModule),
   ],
   providers: [UsersService],
   controllers: [UsersController],

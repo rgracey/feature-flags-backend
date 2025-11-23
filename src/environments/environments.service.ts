@@ -1,9 +1,9 @@
 import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import { ProjectsService } from 'src/projects';
 import { Environment } from './environment.entity';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { CreateEnvironmentDto } from './dtos';
+import { AuthorisationService } from 'src/authorisation';
 
 @Injectable()
 export class EnvironmentsService {
@@ -11,7 +11,7 @@ export class EnvironmentsService {
         @InjectRepository(Environment)
         private readonly environmentsRepository: EntityRepository<Environment>,
         private readonly entityManager: EntityManager,
-        private readonly projectsService: ProjectsService,
+        private readonly authorisationService: AuthorisationService,
     ) { }
 
     /**
@@ -22,7 +22,7 @@ export class EnvironmentsService {
      * @returns the newly created environment
      */
     async createEnvironmentForProject(userId: string, projectId: string, createEnvironmentDto: CreateEnvironmentDto) {
-        if (!this.projectsService.isUserAMemberOfProject(userId, projectId)) {
+        if (!this.authorisationService.canCreateEnvironmentInProject(userId, projectId)) {
             throw new Error('User does not have access to this project');
         }
 
@@ -43,7 +43,7 @@ export class EnvironmentsService {
      * @returns the environments for the project
      */
     async getAllEnvironmentsForProject(userId: string, projectId: string) {
-        if (!this.projectsService.isUserAMemberOfProject(userId, projectId)) {
+        if (!this.authorisationService.canGetEnvironmentsInProject(userId, projectId)) {
             throw new Error('User does not have access to this project');
         }
 

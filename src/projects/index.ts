@@ -1,2 +1,2 @@
 export * from './projects.module';
-export * from './projects.service';
+export * from './project-memberships.service';
