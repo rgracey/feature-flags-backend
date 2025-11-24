@@ -22,7 +22,7 @@ export class FeatureFlagsService {
      * @returns the feature flags for the project
      */
     async getFeatureFlagsForProject(userId: string, projectId: string) {
-        if (!this.authorisationService.canGetFeatureFlags(userId, projectId)) {
+        if (!(await this.authorisationService.canGetFeatureFlags(userId, projectId))) {
             throw new Error('User does not have access to this project');
         }
 
@@ -43,7 +43,7 @@ export class FeatureFlagsService {
         projectId: string,
         createFeatureFlagDto: CreateFeatureFlagDto
     ) {
-        if (!this.authorisationService.canCreateFeatureFlag(userId, projectId)) {
+        if (!(await this.authorisationService.canCreateFeatureFlag(userId, projectId))) {
             throw new Error('User does not have access to this project');
         }
 
