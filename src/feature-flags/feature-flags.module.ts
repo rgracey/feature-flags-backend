@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { FeatureFlagsController } from './feature-flags.controller';
-import { FeatureFlagsService } from './feature-flags.service';
+import { FeatureFlagsController } from './controllers';
+import { FeatureFlagsService } from './services';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { FeatureFlag } from './entities';
 import { AuthenticationModule } from 'src/authentication/authentication.module';

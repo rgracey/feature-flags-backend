@@ -1,9 +1,9 @@
 import { BadRequestException, Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthUser, AuthUserDto, JwtGuard } from 'src/authentication';
-import { FeatureFlagsService } from './feature-flags.service';
-import { CreateFeatureFlagDto } from './dtos';
-import { FeatureFlagWithKeyAlreadyExistsError } from './errors';
+import { FeatureFlagsService } from '../services/feature-flags.service';
+import { CreateFeatureFlagDto } from '../dtos';
+import { FeatureFlagWithKeyAlreadyExistsError } from '../errors';
 
 @ApiTags('feature-flags')
 @Controller({ path: 'projects/:projectId/feature-flags', version: '1' })

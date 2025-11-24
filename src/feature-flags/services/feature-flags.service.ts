@@ -1,10 +1,10 @@
 import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import { FeatureFlag } from './entities';
+import { FeatureFlag } from '../entities';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { AuthorisationService } from 'src/authorisation';
-import { CreateFeatureFlagDto } from './dtos';
-import { FeatureFlagWithKeyAlreadyExistsError } from './errors';
+import { CreateFeatureFlagDto } from '../dtos';
+import { FeatureFlagWithKeyAlreadyExistsError } from '../errors';
 
 @Injectable()
 export class FeatureFlagsService {
