@@ -1,19 +1,96 @@
 import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import { FeatureFlag } from '../entities';
+import { FeatureFlag, FeatureFlagRule } from '../entities';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { AuthorisationService } from 'src/authorisation';
-import { CreateFeatureFlagDto } from '../dtos';
-import { FeatureFlagWithKeyAlreadyExistsError } from '../errors';
+import { CreateFeatureFlagDto, UpdateFeatureFlagDto } from '../dtos';
+import { FeatureFlagNotFound, FeatureFlagWithKeyAlreadyExistsError } from '../errors';
 
 @Injectable()
 export class FeatureFlagsService {
     constructor(
         @InjectRepository(FeatureFlag)
         private readonly featureFlagsRepository: EntityRepository<FeatureFlag>,
+        @InjectRepository(FeatureFlagRule)
+        private readonly featureFlagRulesRepository: EntityRepository<FeatureFlagRule>,
         private readonly entityManager: EntityManager,
         private readonly authorisationService: AuthorisationService,
     ) { }
+
+    /**
+     * Update an existing feature flag
+     * @param userId the ID of the user updating the feature flag
+     * @param projectId the ID of the project this feature flag belongs to
+     * @param featureFlagKey the key of the feature flag to update
+     * @param updateFeatureFlagDto the data to update the feature flag with
+     * @returns the updated feature flag
+     */
+    async updateFeatureFlag(
+        userId: string,
+        projectId: string,
+        featureFlagKey: string,
+        updateFeatureFlagDto: UpdateFeatureFlagDto
+    ) {
+        if (!(await this.authorisationService.canUpdateFeatureFlag(userId, projectId))) {
+            throw new Error('User does not have access to update feature flags in this project');
+        }
+
+        const featureFlag = await this.getFeatureFlagByKeyForProject(userId, projectId, featureFlagKey);
+
+        if (!featureFlag) {
+            throw new FeatureFlagNotFound(featureFlagKey);
+        }
+
+        await this.entityManager.transactional(async (em) => {
+            featureFlag.description = updateFeatureFlagDto.description;
+
+            // Replace all existing rules with the new set of rules
+            await em.nativeDelete(FeatureFlagRule, { parentFlag: { key: featureFlag.key } });
+            const newRules = updateFeatureFlagDto.rules.map((ruleDto, index) =>
+                this.featureFlagRulesRepository.create({
+                    name: ruleDto.name,
+                    order: index,
+                    createdBy: userId,
+                    parentFlag: featureFlag,
+                })
+            );
+
+            await em.persistAndFlush([featureFlag, ...newRules]);
+        });
+
+        return this.getFeatureFlagByKeyForProject(userId, projectId, featureFlagKey);
+    }
+
+    /**
+     * Get a specific feature flag by its key for a project
+     * @param userId the ID of the user getting the feature flag
+     * @param projectId the ID of the project to get the feature flag in
+     * @param featureFlagKey the key of the feature flag to get
+     * @returns the feature flag if found, false otherwise
+     */
+    async getFeatureFlagByKeyForProject(
+        userId: string,
+        projectId: string,
+        featureFlagKey: string
+    ) {
+        if (!(await this.authorisationService.canGetFeatureFlags(userId, projectId))) {
+            throw new Error('User does not have access to this project');
+        }
+
+        const featureFlag = await this.featureFlagsRepository.findOne(
+            {
+                project: { id: projectId },
+                key: featureFlagKey
+            },
+            { populate: ['rules'] }
+        );
+
+        if (!featureFlag) {
+            throw new Error('Feature flag not found');
+        }
+
+        return featureFlag;
+    }
 
     /**
      * Get all feature flags for a project

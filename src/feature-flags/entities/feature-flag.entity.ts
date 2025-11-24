@@ -1,7 +1,8 @@
-import { Entity, ManyToOne, Opt, PrimaryKey, Property } from "@mikro-orm/core";
+import { Collection, Entity, ManyToOne, OneToMany, Opt, PrimaryKey, Property } from "@mikro-orm/core";
 import { Environment } from "../../environments/environment.entity";
 import { Project } from "../../projects/entities/project.entity";
 import { User } from "../../users/user.entity";
+import { FeatureFlagRule } from "./feature-flag-rule.entity";
 
 @Entity()
 export class FeatureFlag {
@@ -14,11 +15,14 @@ export class FeatureFlag {
     @Property({ nullable: true })
     description?: string;
 
-    @Property({name: 'value_type'})
+    @Property({ name: 'value_type' })
     valueType!: string;
 
-    @Property({name: 'default_value'})
+    @Property({ name: 'default_value' })
     defaultValue!: string;
+
+    @OneToMany(() => FeatureFlagRule, rule => rule.parentFlag)
+    rules = new Collection<FeatureFlagRule>(this);
 
     @ManyToOne(() => Project, { hidden: true })
     project!: Project;
