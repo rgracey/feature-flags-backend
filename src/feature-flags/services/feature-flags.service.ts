@@ -3,8 +3,9 @@ import { Injectable } from '@nestjs/common';
 import { FeatureFlag, FeatureFlagRule } from '../entities';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { AuthorisationService } from 'src/authorisation';
-import { CreateFeatureFlagDto, UpdateFeatureFlagDto } from '../dtos';
+import { CreateFeatureFlagDto, EvaluationContextDto, UpdateFeatureFlagDto } from '../dtos';
 import { FeatureFlagNotFound, FeatureFlagWithKeyAlreadyExistsError } from '../errors';
+import { EvaluationService } from './evaluation.service';
 
 @Injectable()
 export class FeatureFlagsService {
@@ -52,6 +53,8 @@ export class FeatureFlagsService {
                     order: index,
                     createdBy: userId,
                     parentFlag: featureFlag,
+                    conditions: ruleDto.conditions,
+                    value: ruleDto.value,
                 })
             );
 
@@ -132,6 +135,8 @@ export class FeatureFlagsService {
         if (existingFlagWithKey) {
             throw new FeatureFlagWithKeyAlreadyExistsError(createFeatureFlagDto.key);
         }
+
+        // TODO - need to validate rules, conditions and the values (for the rules) match the value type of the rule
 
         const featureFlag = this.featureFlagsRepository.create({
             project: projectId,

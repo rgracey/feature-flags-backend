@@ -5,6 +5,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { FeatureFlag, FeatureFlagRule } from './entities';
 import { AuthenticationModule } from 'src/authentication/authentication.module';
 import { AuthorisationModule } from 'src/authorisation/authorisation.module';
+import { EvaluationService } from './services/evaluation.service';
 
 @Module({
   imports: [
@@ -13,6 +14,6 @@ import { AuthorisationModule } from 'src/authorisation/authorisation.module';
     AuthorisationModule,
   ],
   controllers: [FeatureFlagsController],
-  providers: [FeatureFlagsService],
+  providers: [FeatureFlagsService, EvaluationService],
 })
 export class FeatureFlagsModule { }

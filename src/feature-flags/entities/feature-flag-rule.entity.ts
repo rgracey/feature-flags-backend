@@ -13,15 +13,21 @@ export class FeatureFlagRule {
     @Property()
     order!: number;
 
+    // The value to return if the rule matches
+    @Property()
+    value!: string;
+
+    // A JSON string representing the conditions for this rule
+    @Property({ type: 'jsonb', default: [] })
+    conditions!: {
+        attribute: string;
+        operator: string;
+        value: string;
+    }[];
+
     @ManyToOne(() => FeatureFlag, { hidden: true })
     parentFlag?: FeatureFlag | null;
 
     @ManyToOne(() => User, { hidden: true })
     createdBy!: User;
-
-    @Property({ name: 'created_at', defaultRaw: 'now()' })
-    createdAt!: Date & Opt;
-
-    @Property({ name: 'updated_at', defaultRaw: 'now()', onUpdate: () => new Date() })
-    updatedAt!: Date & Opt
 }

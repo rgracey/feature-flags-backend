@@ -1,12 +1,15 @@
-import { Collection, Entity, ManyToOne, OneToMany, Opt, PrimaryKey, Property } from "@mikro-orm/core";
-import { Environment } from "../../environments/environment.entity";
+import { Collection, Entity, ManyToOne, OneToMany, Opt, PrimaryKey, Property, Unique } from "@mikro-orm/core";
 import { Project } from "../../projects/entities/project.entity";
 import { User } from "../../users/user.entity";
 import { FeatureFlagRule } from "./feature-flag-rule.entity";
 
 @Entity()
+@Unique({ properties: ['project', 'key'] })
 export class FeatureFlag {
-    @PrimaryKey({ type: 'string', length: 100 })
+    @PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
+    id: string;
+
+    @Property({ unique: true })
     key!: string;
 
     @Property()

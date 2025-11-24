@@ -226,14 +226,24 @@
     },
     {
       "columns": {
-        "key": {
-          "name": "key",
-          "type": "varchar(100)",
+        "id": {
+          "name": "id",
+          "type": "uuid",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 100,
+          "default": "gen_random_uuid()",
+          "mappedType": "uuid"
+        },
+        "key": {
+          "name": "key",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 255,
           "mappedType": "string"
         },
         "name": {
@@ -321,9 +331,30 @@
       "schema": "public",
       "indexes": [
         {
-          "keyName": "feature_flag_pkey",
           "columnNames": [
             "key"
+          ],
+          "composite": false,
+          "keyName": "feature_flag_key_unique",
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "feature_flag_project_id_key_unique",
+          "columnNames": [
+            "project_id",
+            "key"
+          ],
+          "composite": true,
+          "constraint": true,
+          "primary": false,
+          "unique": true
+        },
+        {
+          "keyName": "feature_flag_pkey",
+          "columnNames": [
+            "id"
           ],
           "composite": false,
           "constraint": true,
@@ -391,15 +422,34 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "parent_flag_key": {
-          "name": "parent_flag_key",
-          "type": "varchar(100)",
+        "value": {
+          "name": "value",
+          "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "length": 100,
+          "length": 255,
           "mappedType": "string"
+        },
+        "conditions": {
+          "name": "conditions",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "'[]'",
+          "mappedType": "json"
+        },
+        "parent_flag_id": {
+          "name": "parent_flag_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "uuid"
         },
         "created_by_id": {
           "name": "created_by_id",
@@ -409,28 +459,6 @@
           "primary": false,
           "nullable": false,
           "mappedType": "uuid"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": 255,
-          "default": "now()",
-          "mappedType": "string"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": 255,
-          "default": "now()",
-          "mappedType": "string"
         }
       },
       "name": "feature_flag_rules",
@@ -449,14 +477,14 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "feature_flag_rules_parent_flag_key_foreign": {
-          "constraintName": "feature_flag_rules_parent_flag_key_foreign",
+        "feature_flag_rules_parent_flag_id_foreign": {
+          "constraintName": "feature_flag_rules_parent_flag_id_foreign",
           "columnNames": [
-            "parent_flag_key"
+            "parent_flag_id"
           ],
           "localTableName": "public.feature_flag_rules",
           "referencedColumnNames": [
-            "key"
+            "id"
           ],
           "referencedTableName": "public.feature_flag",
           "updateRule": "cascade"

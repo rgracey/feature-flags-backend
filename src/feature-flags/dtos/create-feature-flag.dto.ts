@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, Matches } from "class-validator";
+import { IsEnum, IsString, Matches } from "class-validator";
+import { FeatureFlagRuleDto } from "./feature-flag-rule.dto";
 
 export class CreateFeatureFlagDto {
     @ApiProperty({ example: 'brand_new_feature', description: 'The unique key for the feature flag' })
@@ -19,7 +20,14 @@ export class CreateFeatureFlagDto {
     @IsString()
     readonly defaultValue: string;
 
-    @ApiProperty({ example: 'boolean', description: 'The type of value the feature flag holds (e.g., boolean, string, number)' })
-    @IsString() // TODO - consider using an enum for valueType
+    @ApiProperty({
+        example: 'boolean',
+        enum: ['boolean', 'string', 'number', 'json'],
+        description: 'The type of value the feature flag holds (e.g., boolean, string, number)'
+    })
+    @IsEnum(['boolean', 'string', 'number', 'json'])
     readonly valueType: string;
+
+    @ApiProperty({ type: () => [FeatureFlagRuleDto], description: 'The list of rules for the feature flag' })
+    readonly rules: FeatureFlagRuleDto[];
 }
