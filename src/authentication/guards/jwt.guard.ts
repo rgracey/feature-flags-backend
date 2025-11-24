@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { AuthUserDto } from '../dto';
+import { AuthUserDto } from '../dtos';
 
 @Injectable()
 export class JwtGuard implements CanActivate {

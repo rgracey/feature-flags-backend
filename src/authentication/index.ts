@@ -1,3 +1,3 @@
 export * from './guards';
 export * from './decorators';
-export { AuthUserDto } from './dto';
+export { AuthUserDto } from './dtos';

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { UsersModule } from './users';
-import { AuthModule } from './auth/auth.module';
+import { AuthenticationModule } from './authentication/authentication.module';
 import { ConfigModule } from '@nestjs/config';
 import { ProjectsModule } from './projects/projects.module';
 import { EnvironmentsModule } from './environments/environments.module';
@@ -14,7 +14,7 @@ import { AuthorisationModule } from './authorisation/authorisation.module';
     MikroOrmModule.forRoot({}),
     AuthorisationModule,
     UsersModule,
-    AuthModule,
+    AuthenticationModule,
     ProjectsModule,
     EnvironmentsModule,
     FeatureFlagsModule,

@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { EnvironmentsService } from './environments.service';
-import { AuthUser, AuthUserDto, JwtGuard } from 'src/auth';
+import { AuthUser, AuthUserDto, JwtGuard } from 'src/authentication';
 import { CreateEnvironmentDto } from './dtos';
 
 @ApiTags('environments')

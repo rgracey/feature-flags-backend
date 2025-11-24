@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ProjectsController } from './projects.controller';
-import { AuthModule } from 'src/auth/auth.module';
+import { AuthenticationModule } from 'src/authentication/authentication.module';
 import { ProjectsService } from './projects.service';
 import { Project } from './entities/project.entity';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -9,7 +9,7 @@ import { ProjectMembershipsService } from './project-memberships.service';
 
 @Module({
   imports: [
-    AuthModule,
+    AuthenticationModule,
     MikroOrmModule.forFeature([
       Project,
       ProjectMembership

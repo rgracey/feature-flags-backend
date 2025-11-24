@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuthUser, AuthUserDto, JwtGuard } from 'src/auth';
+import { AuthUser, AuthUserDto, JwtGuard } from 'src/authentication';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dtos';
 

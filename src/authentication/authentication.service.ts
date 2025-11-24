@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
-export class AuthService {
+export class AuthenticationService {
     constructor(
         @Inject(forwardRef(() => UsersService))
         private readonly usersService: UsersService,

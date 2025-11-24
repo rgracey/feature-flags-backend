@@ -1,12 +1,12 @@
 import { Body, Controller, Post, UnauthorizedException } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { LoginDto, LoginSuccessDto } from './dto';
-import { AuthService } from './auth.service';
+import { LoginDto, LoginSuccessDto } from './dtos';
+import { AuthenticationService } from './authentication.service';
 
 @ApiTags('auth')
 @Controller({ path: 'auth', version: '1' })
-export class AuthController {
-    constructor(private readonly authService: AuthService) { }
+export class AuthenticationController {
+    constructor(private readonly authService: AuthenticationService) { }
 
     @ApiOperation({ summary: 'User login' })
     @ApiResponse({ status: 200, description: 'The user has been successfully logged in.' })

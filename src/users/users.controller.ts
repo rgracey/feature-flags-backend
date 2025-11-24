@@ -1,6 +1,6 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuthUserDto, JwtGuard, AuthUser } from 'src/auth';
+import { AuthUserDto, JwtGuard, AuthUser } from 'src/authentication';
 
 @ApiTags('users')
 @Controller({ path: 'users', version: '1' })
