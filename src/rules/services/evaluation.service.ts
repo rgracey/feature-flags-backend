@@ -2,41 +2,82 @@ import { Injectable } from '@nestjs/common';
 import { EvaluationContextDto, EvaluationResultDto } from '../dtos';
 import * as jsonLogic from 'json-logic-js';
 import { Rule } from '../entities';
+import { Condition } from '../types';
+import { RulesService } from './rules.service';
 
 @Injectable()
 export class EvaluationService {
-    constructor() { }
+    constructor(
+        private readonly rulesService: RulesService,
+    ) { }
 
     async evaluate(
         evaluationContext: EvaluationContextDto,
         rules: Rule[]
     ): Promise<EvaluationResultDto | null> {
-        for (const rule of rules) {
-            // Convert each condition into a JsonLogic expression
-            const jsonLogicConditions = rule.conditions.map(condition => ({
-                [condition.operator]: [{ var: condition.attribute }, condition.value]
-            }));
+        const results = await Promise.all(
+            rules.map(async (rule) => {
+                return this.evaluateRule(evaluationContext, rule);
+            })
+        );
 
-            const logic = { and: jsonLogicConditions };
+        return results.find((res) => res !== null) || null;
+    }
 
-            const result = jsonLogic.apply(logic, evaluationContext.attributes);
+    private async evaluateRule(
+        evaluationContext: EvaluationContextDto,
+        rule: Rule
+    ): Promise<EvaluationResultDto | null> {
+        const conditionResults = await Promise.all(
+            rule.conditions.map(async (condition) => {
+                switch (condition.type) {
+                    case 'attribute':
+                        return this.evaluateAttributeCondition(
+                            condition,
+                            evaluationContext.attributes
+                        );
+                    case 'segment':
+                        return this.evaluateSegmentCondition(
+                            condition,
+                            evaluationContext
+                        );
+                    default:
+                        throw new Error(`Unknown condition type: ${JSON.stringify(condition)}`);
+                }
+            })
+        );
 
-            if (!result) {
-                continue; // rule does not match
-            }
-
-            const percentage = this.hashToPercentage(evaluationContext.stableId, rule.id);
-            if (percentage >= rule.rolloutPercentage) {
-                continue; // user falls outside rollout
-            }
-
-            return new EvaluationResultDto(
-                rule.value,
-                rule.id,
-            );
+        if (conditionResults.every((res) => res)) {
+            return new EvaluationResultDto(rule.value, rule.id);
         }
 
         return null;
+    }
+
+    private async evaluateSegmentCondition(
+        condition: Extract<Condition, { type: 'segment' }>,
+        evaluationContext: EvaluationContextDto
+    ): Promise<boolean> {
+        const rules = await this.rulesService.getRules(condition.segmentId);
+
+        return (await Promise.all(
+            rules.map(async (rule) => {
+                return this.evaluateRule(evaluationContext, rule);
+            })
+        )).some((res) => !!res);
+    }
+
+    private evaluateAttributeCondition(
+        condition: Extract<Condition, { type: 'attribute' }>,
+        attributes: EvaluationContextDto['attributes']
+    ): boolean {
+        const logic: jsonLogic.RulesLogic<jsonLogic.AdditionalOperation> = {
+            and: [{
+                [condition.operator]: [{ var: condition.attribute }, condition.value]
+            }]
+        };
+
+        return jsonLogic.apply(logic, attributes);
     }
 
     private hashToPercentage(stableId: string, ruleId: string): number {

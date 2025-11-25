@@ -1,7 +1,8 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiExtraModels, ApiProperty, getSchemaPath } from "@nestjs/swagger";
 import { IsString } from "class-validator";
-import { RuleConditionDto } from "./rule-condition.dto";
+import { AttributeConditionDto, RuleConditionDto, SegmentConditionDto } from "./rule-condition.dto";
 
+@ApiExtraModels(AttributeConditionDto, SegmentConditionDto)
 export class RuleDto {
     @ApiProperty({ example: 'uuid-v4-string', description: 'The unique identifier of the rule', required: false })
     @IsString()
@@ -15,8 +16,17 @@ export class RuleDto {
     @IsString()
     readonly value: string;
 
-    @ApiProperty({ type: () => [RuleConditionDto], description: "The conditions for this rule" })
-    readonly conditions: RuleConditionDto[];
+    @ApiProperty({
+        description: "The conditions for this rule",
+        type: 'array',
+        items: {
+            oneOf: [
+                { $ref: getSchemaPath(AttributeConditionDto) },
+                { $ref: getSchemaPath(SegmentConditionDto) },
+            ]
+        }
+    })
+    readonly conditions: (AttributeConditionDto | SegmentConditionDto)[];
 
     @ApiProperty({ example: 1, description: "The order of the rule" })
     readonly order?: number;

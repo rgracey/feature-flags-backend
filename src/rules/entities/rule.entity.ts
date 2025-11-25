@@ -1,5 +1,6 @@
 import { Entity, ManyToOne, Opt, PrimaryKey, Property } from "@mikro-orm/core";
 import { User } from "../../users/user.entity";
+import { Condition } from "../types";
 
 @Entity({ tableName: 'rules' })
 export class Rule {
@@ -18,11 +19,7 @@ export class Rule {
 
     // A JSON string representing the conditions for this rule
     @Property({ type: 'jsonb', default: [] })
-    conditions!: {
-        attribute: string;
-        operator: string;
-        value: string[];
-    }[];
+    conditions!: Condition[];
 
     @Property({ type: 'float', default: 0 })
     rolloutPercentage!: number;

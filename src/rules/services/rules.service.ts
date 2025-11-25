@@ -1,5 +1,5 @@
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
+import { CreateRequestContext, EntityManager, EntityRepository, MikroORM } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
 import { Rule } from '../entities';
 import { AuthorisationService } from 'src/authorisation';
@@ -12,6 +12,7 @@ export class RulesService {
     constructor(
         @InjectRepository(Rule)
         private readonly rulesRepository: EntityRepository<Rule>,
+        private readonly orm: MikroORM,
         private readonly entityManager: EntityManager,
         private readonly authorisationService: AuthorisationService,
     ) { }
@@ -22,11 +23,11 @@ export class RulesService {
         return this.rulesRepository.find({ parentId }, { orderBy: { order: 'ASC' } });
     }
 
+    @CreateRequestContext()
     async upsertRules(userId: string, parentId: string, rulesData: RuleDto[]): Promise<Rule[]> {
         // TODO: How do we authorise this?
-
-        await this.entityManager.transactional(async (em) => {
-            const existingRules = await this.rulesRepository.find({ parentId });
+        return await this.entityManager.transactional(async (em) => {
+            const existingRules = await em.find(Rule, { parentId });
 
             const rulesToDelete = existingRules.filter(
                 (existingRule) => !rulesData.some((ruleData) => ruleData.id === existingRule.id)
@@ -48,16 +49,17 @@ export class RulesService {
 
                     existingRule.name = ruleData.name;
                     existingRule.order = i;
+                    // TODO - validate conditions (does segment exist?, valid operators?)
                     existingRule.conditions = ruleData.conditions;
                     existingRule.value = ruleData.value;
                     existingRule.rolloutPercentage = ruleData.rolloutPercentage;
-                    existingRule.updatedBy = this.entityManager.getReference(User, userId);
+                    existingRule.updatedBy = em.getReference(User, userId);
                     em.persist(existingRule);
 
                     continue;
                 }
                 // Create new rule
-                const newRule = this.rulesRepository.create({
+                const newRule = em.create(Rule, {
                     name: ruleData.name,
                     order: i,
                     parentId: parentId,
@@ -69,9 +71,9 @@ export class RulesService {
                 em.persist(newRule);
             }
 
-            await em.flush();
-        });
+            em.flush();
 
-        return this.rulesRepository.find({ parentId }, { orderBy: { order: 'ASC' } });
+            return em.find(Rule, { parentId }, { orderBy: { order: 'ASC' } });
+        });
     }
 }
