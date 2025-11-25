@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsString } from "class-validator";
 
-export class FeatureFlagRuleConditionDto {
+export class RuleConditionDto {
     @ApiProperty({ example: "country", description: "The attribute to check" })
     @IsString()
     readonly attribute: string;
@@ -10,7 +10,7 @@ export class FeatureFlagRuleConditionDto {
     @IsString()
     readonly operator: string;
 
-    @ApiProperty({ example: "US", description: "The value to compare against" })
-    @IsString()
-    readonly value: string;
+    @ApiProperty({ example: "US", description: "The value to compare against", isArray: true })
+    @IsString({ each: true })
+    readonly value: string[];
 }

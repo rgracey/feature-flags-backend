@@ -7,6 +7,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { EnvironmentsModule } from './environments/environments.module';
 import { FeatureFlagsModule } from './feature-flags/feature-flags.module';
 import { AuthorisationModule } from './authorisation/authorisation.module';
+import { RulesModule } from './rules/rules.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AuthorisationModule } from './authorisation/authorisation.module';
     ProjectsModule,
     EnvironmentsModule,
     FeatureFlagsModule,
+    RulesModule,
   ],
   controllers: [],
   providers: [],

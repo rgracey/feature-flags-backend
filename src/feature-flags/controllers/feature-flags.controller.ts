@@ -2,15 +2,17 @@ import { BadRequestException, Body, Controller, Get, Param, Patch, Post, UseGuar
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthUser, AuthUserDto, JwtGuard } from 'src/authentication';
 import { FeatureFlagsService } from '../services/feature-flags.service';
-import { CreateFeatureFlagDto, EvaluationContextDto, EvaluationResultDto, UpdateFeatureFlagDto } from '../dtos';
-import { FeatureFlagWithKeyAlreadyExistsError } from '../errors';
-import { EvaluationService } from '../services';
+import { CreateFeatureFlagDto, UpdateFeatureFlagDto } from '../dtos';
+import { FeatureFlagNotFound, FeatureFlagWithKeyAlreadyExistsError } from '../errors';
+import { EvaluationService, RulesService } from 'src/rules/services';
+import { EvaluationContextDto, EvaluationResultDto } from 'src/rules';
 
 @ApiTags('feature-flags')
 @Controller({ path: 'projects/:projectId/feature-flags', version: '1' })
 export class FeatureFlagsController {
     constructor(
         private readonly featureFlagsService: FeatureFlagsService,
+        private readonly rulesService: RulesService,
         private readonly evaluationService: EvaluationService,
     ) { }
 
@@ -80,12 +82,23 @@ export class FeatureFlagsController {
         @Param('projectId') projectId: string,
         @Param('featureFlagKey') featureFlagKey: string
     ) {
-        return this.evaluationService.evaluateFeatureFlag(
+        // TODO - this endpoint will be removed in favour of separate client (client and server) initialisation endpoints
+        const featureFlag = await this.featureFlagsService.getFeatureFlagByKeyForProject(
             user.id,
             projectId,
-            featureFlagKey,
-            evaluationContext
+            featureFlagKey
         );
+
+        if (!featureFlag) {
+            throw new FeatureFlagNotFound(featureFlagKey);
+        }
+
+        // Getting rules DOES NOT enforce any authorisation
+        const rules = await this.rulesService.getRules(featureFlag.id);
+
+        console.log('Evaluating feature flag with rules:', rules);
+
+        return this.evaluationService.evaluate(evaluationContext, rules);
     }
 
 }

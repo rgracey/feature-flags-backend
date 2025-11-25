@@ -1,21 +1,21 @@
 import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
 import { Injectable } from '@nestjs/common';
-import { FeatureFlag, FeatureFlagRule } from '../entities';
+import { FeatureFlag } from '../entities';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { AuthorisationService } from 'src/authorisation';
-import { CreateFeatureFlagDto, EvaluationContextDto, UpdateFeatureFlagDto } from '../dtos';
+import { CreateFeatureFlagDto, UpdateFeatureFlagDto } from '../dtos';
 import { FeatureFlagNotFound, FeatureFlagWithKeyAlreadyExistsError } from '../errors';
-import { EvaluationService } from './evaluation.service';
+import { RulesService } from 'src/rules';
+import { UpdateNonExistentRuleError } from 'src/rules/errors';
 
 @Injectable()
 export class FeatureFlagsService {
     constructor(
         @InjectRepository(FeatureFlag)
         private readonly featureFlagsRepository: EntityRepository<FeatureFlag>,
-        @InjectRepository(FeatureFlagRule)
-        private readonly featureFlagRulesRepository: EntityRepository<FeatureFlagRule>,
         private readonly entityManager: EntityManager,
         private readonly authorisationService: AuthorisationService,
+        private readonly rulesService: RulesService,
     ) { }
 
     /**
@@ -45,20 +45,9 @@ export class FeatureFlagsService {
         await this.entityManager.transactional(async (em) => {
             featureFlag.description = updateFeatureFlagDto.description;
 
-            // Replace all existing rules with the new set of rules
-            await em.nativeDelete(FeatureFlagRule, { parentFlag: { key: featureFlag.key } });
-            const newRules = updateFeatureFlagDto.rules.map((ruleDto, index) =>
-                this.featureFlagRulesRepository.create({
-                    name: ruleDto.name,
-                    order: index,
-                    createdBy: userId,
-                    parentFlag: featureFlag,
-                    conditions: ruleDto.conditions,
-                    value: ruleDto.value,
-                })
-            );
+            this.rulesService.upsertRules(userId, featureFlag.id, updateFeatureFlagDto.rules);
 
-            await em.persistAndFlush([featureFlag, ...newRules]);
+            await em.persistAndFlush([featureFlag]);
         });
 
         return this.getFeatureFlagByKeyForProject(userId, projectId, featureFlagKey);
@@ -80,17 +69,17 @@ export class FeatureFlagsService {
             throw new Error('User does not have access to this project');
         }
 
-        const featureFlag = await this.featureFlagsRepository.findOne(
-            {
-                project: { id: projectId },
-                key: featureFlagKey
-            },
-            { populate: ['rules'] }
-        );
+        const featureFlag = await this.featureFlagsRepository.findOne({
+            project: { id: projectId },
+            key: featureFlagKey
+        });
 
         if (!featureFlag) {
             throw new Error('Feature flag not found');
         }
+
+        const rules = await this.rulesService.getRules(featureFlag.id);
+        featureFlag.rules = rules;
 
         return featureFlag;
     }
@@ -136,8 +125,6 @@ export class FeatureFlagsService {
             throw new FeatureFlagWithKeyAlreadyExistsError(createFeatureFlagDto.key);
         }
 
-        // TODO - need to validate rules, conditions and the values (for the rules) match the value type of the rule
-
         const featureFlag = this.featureFlagsRepository.create({
             project: projectId,
             createdBy: userId,
@@ -147,7 +134,6 @@ export class FeatureFlagsService {
             valueType: createFeatureFlagDto.valueType,
             key: createFeatureFlagDto.key,
         });
-
         await this.entityManager.persistAndFlush(featureFlag);
         return featureFlag;
     }

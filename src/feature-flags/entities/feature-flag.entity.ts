@@ -1,7 +1,7 @@
 import { Collection, Entity, ManyToOne, OneToMany, Opt, PrimaryKey, Property, Unique } from "@mikro-orm/core";
 import { Project } from "../../projects/entities/project.entity";
 import { User } from "../../users/user.entity";
-import { FeatureFlagRule } from "./feature-flag-rule.entity";
+import { Rule } from "src/rules/entities/rule.entity";
 
 @Entity()
 @Unique({ properties: ['project', 'key'] })
@@ -24,9 +24,6 @@ export class FeatureFlag {
     @Property({ name: 'default_value' })
     defaultValue!: string;
 
-    @OneToMany(() => FeatureFlagRule, rule => rule.parentFlag)
-    rules = new Collection<FeatureFlagRule>(this);
-
     @ManyToOne(() => Project, { hidden: true })
     project!: Project;
 
@@ -38,4 +35,6 @@ export class FeatureFlag {
 
     @Property({ name: 'updated_at', defaultRaw: 'now()', onUpdate: () => new Date() })
     updatedAt!: Date & Opt
+
+    rules?: Rule[];
 }

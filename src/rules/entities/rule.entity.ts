@@ -1,9 +1,8 @@
 import { Entity, ManyToOne, Opt, PrimaryKey, Property } from "@mikro-orm/core";
 import { User } from "../../users/user.entity";
-import { FeatureFlag } from "./feature-flag.entity";
 
-@Entity({ tableName: 'feature_flag_rules' })
-export class FeatureFlagRule {
+@Entity({ tableName: 'rules' })
+export class Rule {
     @PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
     id: string;
 
@@ -22,12 +21,24 @@ export class FeatureFlagRule {
     conditions!: {
         attribute: string;
         operator: string;
-        value: string;
+        value: string[];
     }[];
 
-    @ManyToOne(() => FeatureFlag, { hidden: true })
-    parentFlag?: FeatureFlag | null;
+    @Property({ type: 'float', default: 0 })
+    rolloutPercentage!: number;
+
+    @Property()
+    parentId!: string;
 
     @ManyToOne(() => User, { hidden: true })
     createdBy!: User;
+
+    @Property({ name: 'created_at', defaultRaw: 'now()' })
+    createdAt!: Date & Opt;
+
+    @ManyToOne(() => User, { hidden: true, nullable: true })
+    updatedBy?: User;
+
+    @Property({ name: 'updated_at', defaultRaw: 'now()', onUpdate: () => new Date() })
+    updatedAt!: Date & Opt
 }
