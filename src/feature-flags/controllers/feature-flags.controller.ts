@@ -96,9 +96,13 @@ export class FeatureFlagsController {
         // Getting rules DOES NOT enforce any authorisation
         const rules = await this.rulesService.getRules(featureFlag.id);
 
-        console.log('Evaluating feature flag with rules:', rules);
+        const result = await this.evaluationService.evaluate(evaluationContext, rules);
 
-        return this.evaluationService.evaluate(evaluationContext, rules);
+        if (result) {
+            return result;
+        }
+
+        return new EvaluationResultDto(featureFlag.defaultValue);
     }
 
 }
