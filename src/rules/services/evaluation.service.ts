@@ -17,7 +17,7 @@ export class EvaluationService {
                 [condition.operator]: [{ var: condition.attribute }, condition.value]
             }));
 
-            const logic = { or: jsonLogicConditions };
+            const logic = { and: jsonLogicConditions };
 
             const result = jsonLogic.apply(logic, evaluationContext.attributes);
 
