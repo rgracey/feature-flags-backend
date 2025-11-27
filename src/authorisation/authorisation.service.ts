@@ -26,4 +26,12 @@ export class AuthorisationService {
     async canGetEnvironmentsInProject(userId: string, projectId: string): Promise<boolean> {
         return this.projectMembershipsService.isUserAMemberOfProject(userId, projectId);
     }
+
+    async canCreateSegment(userId: string, projectId: string): Promise<boolean> {
+        return this.projectMembershipsService.isUserAMemberOfProject(userId, projectId);
+    }
+    
+    async canGetSegments(userId: string, projectId: string): Promise<boolean> {
+        return this.projectMembershipsService.isUserAMemberOfProject(userId, projectId);
+    }
 }

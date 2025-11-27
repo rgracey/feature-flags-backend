@@ -8,6 +8,7 @@ import { EnvironmentsModule } from './environments/environments.module';
 import { FeatureFlagsModule } from './feature-flags/feature-flags.module';
 import { AuthorisationModule } from './authorisation/authorisation.module';
 import { RulesModule } from './rules/rules.module';
+import { SegmentsModule } from './segments/segments.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { RulesModule } from './rules/rules.module';
     EnvironmentsModule,
     FeatureFlagsModule,
     RulesModule,
+    SegmentsModule,
   ],
   controllers: [],
   providers: [],
