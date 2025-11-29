@@ -1,11 +1,10 @@
 import { BadRequestException, Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthUser, AuthUserDto, JwtGuard } from 'src/authentication';
 import { FeatureFlagsService } from '../services/feature-flags.service';
 import { CreateFeatureFlagDto, UpdateFeatureFlagDto } from '../dtos';
-import { FeatureFlagNotFound, FeatureFlagWithKeyAlreadyExistsError } from '../errors';
+import { FeatureFlagWithKeyAlreadyExistsError } from '../errors';
 import { EvaluationService, RulesService } from 'src/rules/services';
-import { EvaluationContextDto, EvaluationResultDto } from 'src/rules';
 
 @ApiTags('feature-flags')
 @Controller({ path: 'projects/:projectId/feature-flags', version: '1' })
@@ -68,41 +67,11 @@ export class FeatureFlagsController {
         @Param('featureFlagKey') featureFlagKey: string,
         @Body() updateFeatureFlagDto: UpdateFeatureFlagDto,
     ) {
-        return this.featureFlagsService.updateFeatureFlag(user.id, projectId, featureFlagKey, updateFeatureFlagDto);
-    }
-
-    @ApiOperation({ summary: 'Evaluate a feature flag for a given set of attributes' })
-    @ApiBearerAuth()
-    @UseGuards(JwtGuard) // TODO - needs client or API key auth
-    @Post(":featureFlagKey/evaluate")
-    @ApiResponse({ status: 200, description: 'The result of the feature flag evaluation.', type: EvaluationResultDto })
-    async evaluateFeatureFlag(
-        @AuthUser() user: AuthUserDto,
-        @Body() evaluationContext: EvaluationContextDto,
-        @Param('projectId') projectId: string,
-        @Param('featureFlagKey') featureFlagKey: string
-    ) {
-        // TODO - this endpoint will be removed in favour of separate client (client and server) initialisation endpoints
-        const featureFlag = await this.featureFlagsService.getFeatureFlagByKeyForProject(
+        return this.featureFlagsService.updateFeatureFlag(
             user.id,
             projectId,
-            featureFlagKey
+            featureFlagKey,
+            updateFeatureFlagDto
         );
-
-        if (!featureFlag) {
-            throw new FeatureFlagNotFound(featureFlagKey);
-        }
-
-        // Getting rules DOES NOT enforce any authorisation
-        const rules = await this.rulesService.getRules(featureFlag.id);
-
-        const result = await this.evaluationService.evaluate(evaluationContext, rules);
-
-        if (result) {
-            return result;
-        }
-
-        return new EvaluationResultDto(featureFlag.defaultValue);
     }
-
 }

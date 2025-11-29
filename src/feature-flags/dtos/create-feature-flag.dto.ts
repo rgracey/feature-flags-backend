@@ -15,15 +15,7 @@ export class CreateFeatureFlagDto {
     @IsString()
     readonly description?: string
 
-    @ApiProperty({ example: 'false', description: 'The default value for the feature flag' })
-    @IsString()
-    readonly defaultValue: string;
-
-    @ApiProperty({
-        example: 'boolean',
-        enum: ['boolean', 'string', 'number', 'json'],
-        description: 'The type of value the feature flag holds (e.g., boolean, string, number)'
-    })
+    @ApiProperty({ example: 'boolean', description: 'The type of the feature flag', enum: ['boolean', 'string', 'number', 'json'] })
     @IsEnum(['boolean', 'string', 'number', 'json'])
-    readonly valueType: string;
+    readonly type: 'boolean' | 'string' | 'number' | 'json';
 }

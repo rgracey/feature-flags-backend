@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { EvaluationService, RulesService } from './services';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { Rule } from './entities/rule.entity';
-import { AuthorisationModule, AuthorisationService } from 'src/authorisation';
+import { AuthorisationModule } from 'src/authorisation';
+import { Ruleset } from './entities/ruleset.entity';
 
 @Module({
   imports: [
-    MikroOrmModule.forFeature([Rule]),
+    MikroOrmModule.forFeature([Ruleset]),
     AuthorisationModule,
   ],
   providers: [RulesService, EvaluationService],

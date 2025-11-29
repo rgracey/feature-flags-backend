@@ -1,21 +1,21 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsString, Matches } from "class-validator";
-import { RuleDto } from "src/rules";
+import { ApiExtraModels, ApiProperty } from "@nestjs/swagger";
+import { IsArray, IsString } from "class-validator";
+import { FeatureFlagRuleDto, SegmentRuleDto } from "src/rules";
 
+@ApiExtraModels(FeatureFlagRuleDto, SegmentRuleDto)
 export class CreateSegmentDto {
     @ApiProperty({ example: 'My Segment', description: 'The name of the segment' })
     @IsString()
     readonly name: string;
 
-    @ApiProperty({ example: 'segment-key-1', description: 'The unique key for the segment' })
-    @IsString()
-    @Matches(/^[a-zA-Z0-9-_]+$/, { message: 'Key can only contain letters, numbers, hyphens, and underscores' })
-    readonly key: string;
-
     @ApiProperty({ example: 'This segment is for beta users', description: 'The description of the segment', required: false })
     @IsString()
     readonly description?: string;
 
-    @ApiProperty({ type: () => [RuleDto], description: 'The list of rules for the feature flag' })
-    readonly rules: RuleDto[];
+    @ApiProperty({
+        description: 'The rules that define this segment',
+        type: [SegmentRuleDto]
+    })
+    @IsArray()
+    readonly rules: SegmentRuleDto[];
 }

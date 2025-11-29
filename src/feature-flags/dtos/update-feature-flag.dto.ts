@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, Matches } from "class-validator";
-import { RuleDto } from "src/rules";
+import { IsArray, IsString } from "class-validator";
+import { FeatureFlagRuleDto } from "src/rules";
 
 export class UpdateFeatureFlagDto {
 
@@ -8,6 +8,10 @@ export class UpdateFeatureFlagDto {
     @IsString()
     readonly description: string;
 
-    @ApiProperty({ type: () => [RuleDto], description: 'The list of rules for the feature flag' })
-    readonly rules: RuleDto[];
+    @ApiProperty({
+        description: 'The rules for the feature flag',
+        type: [FeatureFlagRuleDto]
+    })
+    @IsArray()
+    readonly rules: FeatureFlagRuleDto[];
 }

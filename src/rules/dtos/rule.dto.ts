@@ -1,20 +1,16 @@
 import { ApiExtraModels, ApiProperty, getSchemaPath } from "@nestjs/swagger";
-import { IsString } from "class-validator";
-import { AttributeConditionDto, RuleConditionDto, SegmentConditionDto } from "./rule-condition.dto";
+import { IsNumber, IsString } from "class-validator";
+import { AttributeConditionDto, SegmentConditionDto } from "./rule-condition.dto";
 
 @ApiExtraModels(AttributeConditionDto, SegmentConditionDto)
-export class RuleDto {
-    @ApiProperty({ example: 'uuid-v4-string', description: 'The unique identifier of the rule', required: false })
-    @IsString()
-    readonly id?: string;
-
+class BaseRuleDto {
     @ApiProperty({ example: 'My rule 1', description: 'The name of the rule', required: false })
     @IsString()
     readonly name?: string;
 
-    @ApiProperty({ example: "23", description: "The value to return if the rule matches" })
+    @ApiProperty({ example: 'This rule checks if the user is from the US', description: 'A brief description of the rule', required: false })
     @IsString()
-    readonly value: string;
+    readonly description?: string;
 
     @ApiProperty({
         description: "The conditions for this rule",
@@ -27,10 +23,21 @@ export class RuleDto {
         }
     })
     readonly conditions: (AttributeConditionDto | SegmentConditionDto)[];
-
-    @ApiProperty({ example: 1, description: "The order of the rule" })
-    readonly order?: number;
-
-    @ApiProperty({ example: 50, description: "The rollout percentage for this rule" })
-    readonly rolloutPercentage: number;
 }
+
+export class FeatureFlagRuleDto extends BaseRuleDto {
+    @ApiProperty({ example: 'variation_12345', description: 'The ID of the variation to serve when this rule matches' })
+    @IsString()
+    readonly variationId!: string;
+
+    @ApiProperty({
+        type: 'number',
+        format: 'float',
+        default: 0,
+        description: 'The percentage of users to whom the variation is rolled out'
+    })
+    @IsNumber()
+    readonly rolloutPercentage!: number;
+}
+
+export class SegmentRuleDto extends BaseRuleDto { }

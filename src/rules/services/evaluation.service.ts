@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { EvaluationContextDto, EvaluationResultDto } from '../dtos';
+import { EvaluationContextDto } from '../dtos';
 import * as jsonLogic from 'json-logic-js';
-import { Rule } from '../entities';
-import { Condition } from '../types';
+import { Condition, Rule } from '../types';
 import { RulesService } from './rules.service';
 
 @Injectable()
@@ -13,21 +12,60 @@ export class EvaluationService {
 
     async evaluate(
         evaluationContext: EvaluationContextDto,
-        rules: Rule[]
-    ): Promise<EvaluationResultDto | null> {
+        rules: Rule[],
+    ): Promise<Rule | null> {
         const results = await Promise.all(
             rules.map(async (rule) => {
-                return this.evaluateRule(evaluationContext, rule);
+                const matches = await this.evaluateConditions(
+                    evaluationContext,
+                    rule
+                )
+
+                return matches ? rule : null;
             })
         );
 
-        return results.find((res) => res !== null) || null;
+        return results.find(res => res) || null;
     }
 
-    private async evaluateRule(
+    // async evaluateOld(
+    //     evaluationContext: EvaluationContextDto,
+    //     rules: Rule[]
+    // ): Promise<string | null> {
+    //     for (const rule of rules) {
+    //         switch (rule.type) {
+    //             case 'feature_flag':
+    //                 const matches = await this.evaluateConditions(
+    //                     evaluationContext,
+    //                     rule
+    //                 );
+
+    //                 if (matches) {
+    //                     return rule.variationId;
+    //                 }
+    //                 break;
+    //             case 'segment':
+    //                 const segmentMatches = await this.evaluateConditions(
+    //                     evaluationContext,
+    //                     rule
+    //                 );
+
+    //                 if (segmentMatches) {
+    //                     return rule.variationId;
+    //                 }
+    //                 break;
+    //             default:
+    //                 throw new Error(`Unknown rule type: ${JSON.stringify(rule)}`);
+    //         }
+    //     }
+
+    //     return null;
+    // }
+
+    private async evaluateConditions(
         evaluationContext: EvaluationContextDto,
-        rule: Rule
-    ): Promise<EvaluationResultDto | null> {
+        rule: Rule,
+    ): Promise<boolean> {
         const conditionResults = await Promise.all(
             rule.conditions.map(async (condition) => {
                 switch (condition.type) {
@@ -47,29 +85,12 @@ export class EvaluationService {
             })
         );
 
-        if (conditionResults.every((res) => res)) {
-            return new EvaluationResultDto(rule.value, rule.id);
-        }
-
-        return null;
-    }
-
-    private async evaluateSegmentCondition(
-        condition: Extract<Condition, { type: 'segment' }>,
-        evaluationContext: EvaluationContextDto
-    ): Promise<boolean> {
-        const rules = await this.rulesService.getRules(condition.segmentId);
-
-        return (await Promise.all(
-            rules.map(async (rule) => {
-                return this.evaluateRule(evaluationContext, rule);
-            })
-        )).some((res) => !!res);
+        return conditionResults.every((res) => res);
     }
 
     private evaluateAttributeCondition(
         condition: Extract<Condition, { type: 'attribute' }>,
-        attributes: EvaluationContextDto['attributes']
+        attributes: EvaluationContextDto['attributes'],
     ): boolean {
         const logic: jsonLogic.RulesLogic<jsonLogic.AdditionalOperation> = {
             and: [{
@@ -78,6 +99,29 @@ export class EvaluationService {
         };
 
         return jsonLogic.apply(logic, attributes);
+    }
+
+    private async evaluateSegmentCondition(
+        condition: Extract<Condition, { type: 'segment' }>,
+        evaluationContext: EvaluationContextDto
+    ): Promise<boolean> {
+        const ruleset = await this.rulesService.getRulesetByParentId(condition.segmentId);
+
+        if (!ruleset) {
+            // TODO - throw error? This should not happen
+            return false;
+        }
+
+        const results = await Promise.all(
+            ruleset.rules.map(async (rule) =>
+                await this.evaluateConditions(
+                    evaluationContext,
+                    rule
+                )
+            )
+        );
+
+        return results.some((res) => res);
     }
 
     private hashToPercentage(stableId: string, ruleId: string): number {

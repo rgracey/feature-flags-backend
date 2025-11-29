@@ -6,7 +6,7 @@ import { AuthorisationService } from 'src/authorisation';
 import { CreateFeatureFlagDto, UpdateFeatureFlagDto } from '../dtos';
 import { FeatureFlagNotFound, FeatureFlagWithKeyAlreadyExistsError } from '../errors';
 import { RulesService } from 'src/rules';
-import { UpdateNonExistentRuleError } from 'src/rules/errors';
+import { Variation } from '../entities/variation.entity';
 
 @Injectable()
 export class FeatureFlagsService {
@@ -45,7 +45,7 @@ export class FeatureFlagsService {
         await this.entityManager.transactional(async (em) => {
             featureFlag.description = updateFeatureFlagDto.description;
 
-            this.rulesService.upsertRules(userId, featureFlag.id, updateFeatureFlagDto.rules);
+            this.rulesService.upsertFlagRuleset(userId, featureFlag.id, updateFeatureFlagDto.rules);
 
             await em.persistAndFlush([featureFlag]);
         });
@@ -75,11 +75,8 @@ export class FeatureFlagsService {
         });
 
         if (!featureFlag) {
-            throw new Error('Feature flag not found');
+            throw new FeatureFlagNotFound(featureFlagKey);
         }
-
-        const rules = await this.rulesService.getRules(featureFlag.id);
-        featureFlag.rules = rules;
 
         return featureFlag;
     }
@@ -116,25 +113,49 @@ export class FeatureFlagsService {
             throw new Error('User does not have access to this project');
         }
 
-        const existingFlagWithKey = await this.featureFlagsRepository.findOne({
-            key: createFeatureFlagDto.key,
-            project: { id: projectId }
-        });
+        return await this.entityManager.transactional(async (em) => {
+            const existingFlagWithKey = await em.findOne(FeatureFlag, {
+                key: createFeatureFlagDto.key,
+                project: { id: projectId }
+            });
 
-        if (existingFlagWithKey) {
-            throw new FeatureFlagWithKeyAlreadyExistsError(createFeatureFlagDto.key);
-        }
+            if (existingFlagWithKey) {
+                throw new FeatureFlagWithKeyAlreadyExistsError(createFeatureFlagDto.key);
+            }
 
-        const featureFlag = this.featureFlagsRepository.create({
-            project: projectId,
-            createdBy: userId,
-            name: createFeatureFlagDto.name,
-            description: createFeatureFlagDto.description,
-            defaultValue: createFeatureFlagDto.defaultValue,
-            valueType: createFeatureFlagDto.valueType,
-            key: createFeatureFlagDto.key,
+            const featureFlag = this.featureFlagsRepository.create({
+                project: projectId,
+                createdBy: userId,
+                name: createFeatureFlagDto.name,
+                description: createFeatureFlagDto.description,
+                // defaultVariation: createFeatureFlagDto.defaultVariation,
+                key: createFeatureFlagDto.key,
+                type: createFeatureFlagDto.type,
+            });
+            await em.persistAndFlush(featureFlag);
+
+
+            // Auto create true/false variations for boolean flags
+            if (createFeatureFlagDto.type === 'boolean') {
+                const trueVariation = em.create(Variation, {
+                    flag: featureFlag,
+                    name: 'True',
+                    value: { type: 'boolean', data: true },
+                    createdBy: userId,
+                });
+                const falseVariation = em.create(Variation, {
+                    flag: featureFlag,
+                    name: 'False',
+                    value: { type: 'boolean', data: false },
+                    createdBy: userId,
+                });
+
+                featureFlag.defaultVariation = falseVariation;
+                await em.persistAndFlush([trueVariation, falseVariation, featureFlag]);
+            }
+
+            await em.flush();
+            return featureFlag;
         });
-        await this.entityManager.persistAndFlush(featureFlag);
-        return featureFlag;
     }
 }

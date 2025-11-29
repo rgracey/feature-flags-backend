@@ -23,15 +23,15 @@ export class SegmentsController {
         return this.segmentsService.createSegment(user.id, projectId, createSegmentDto);
     }
 
-    @ApiOperation({ summary: 'Get a specific segment by its key'})
+    @ApiOperation({ summary: 'Get a specific segment by its ID' })
     @ApiBearerAuth()
     @UseGuards(JwtGuard)
-    @Post(':segmentKey')
-    async getSegmentByKey(
+    @Post(':segmentId')
+    async getSegmentById(
         @AuthUser() user: AuthUserDto,
         @Param('projectId') projectId: string,
-        @Param('segmentKey') segmentKey: string
+        @Param('segmentId') segmentId: string
     ) {
-        return this.segmentsService.getSegmentByKey(user.id, projectId, segmentKey);
+        return this.segmentsService.getSegmentById(user.id, projectId, segmentId);
     }
 }

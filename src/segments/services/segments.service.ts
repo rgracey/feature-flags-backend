@@ -21,13 +21,13 @@ export class SegmentsService {
      * Find a segment by its key for a specific project
      * @param userId the ID of the user getting the segment
      * @param projectId the ID of the project the segment belongs to
-     * @param segmentKey the key of the segment to retrieve
+     * @param segmentId the ID of the segment to retrieve
      * @returns the segment if found, null otherwise
      */
-    async getSegmentByKey(
+    async getSegmentById(
         userId: string,
-        projectId: string,
-        segmentKey: string
+        projectId: string, // XXX - remove projectId?
+        segmentId: string
     ) {
         if (!(await this.authorisationService.canGetSegments(userId, projectId))) {
             throw new Error('User does not have access to get segments in this project');
@@ -35,7 +35,7 @@ export class SegmentsService {
 
         return this.segmentsRepository.findOne({
             project: { id: projectId },
-            key: segmentKey,
+            id: segmentId,
         });
     }
 
@@ -51,28 +51,18 @@ export class SegmentsService {
             throw new Error('User does not have access to create segments in this project');
         }
 
-        await this.entityManager.transactional(async (em) => {
-            const existingSegment = await this.segmentsRepository.findOne({
-                project: { id: projectId },
-                key: createSegmentDto.key,
-            });
-
-            if (existingSegment) {
-                throw new SegmentWithKeyAlreadyExistsError(createSegmentDto.key);
-            }
-
-            const segment = this.segmentsRepository.create({
+        return await this.entityManager.transactional(async (em) => {
+            const segment = em.create(Segment, {
                 name: createSegmentDto.name,
                 description: createSegmentDto.description,
-                key: createSegmentDto.key,
                 project: projectId,
                 createdBy: userId,
             });
             await em.persistAndFlush(segment);
 
-            await this.rulesService.upsertRules(userId, segment.id, createSegmentDto.rules);
-        });
+            await this.rulesService.upsertSegmentRuleset(userId, segment.id, createSegmentDto.rules);
 
-        return this.getSegmentByKey(userId, projectId, createSegmentDto.key);
+            return segment;
+        });
     }
 }
