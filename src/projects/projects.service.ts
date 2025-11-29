@@ -39,4 +39,16 @@ export class ProjectsService {
             { memberships: { user: { id: userId } } }
         );
     }
+
+    /**
+     * Get a specific project by ID for a given user
+     * @param userId the ID of the user to get the project for
+     * @param projectId the ID of the project to get
+     * @returns the project if found, null otherwise
+     */
+    async getProjectById(userId: string, projectId: string): Promise<Project | null> {
+        return this.projectsRepository.findOne(
+            { id: projectId, memberships: { user: { id: userId } } }
+        );
+    }
 }

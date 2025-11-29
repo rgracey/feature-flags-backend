@@ -1,8 +1,8 @@
 import { BadRequestException, Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthUser, AuthUserDto, JwtGuard } from 'src/authentication';
 import { FeatureFlagsService } from '../services/feature-flags.service';
-import { CreateFeatureFlagDto, UpdateFeatureFlagDto } from '../dtos';
+import { CreateFeatureFlagDto, FlagDto, UpdateFeatureFlagDto } from '../dtos';
 import { FeatureFlagWithKeyAlreadyExistsError } from '../errors';
 import { EvaluationService, RulesService } from 'src/rules/services';
 
@@ -18,6 +18,7 @@ export class FeatureFlagsController {
     @ApiOperation({ summary: 'Get all feature flags for a project' })
     @ApiBearerAuth()
     @UseGuards(JwtGuard)
+    @ApiResponse({ status: 200, description: 'List of feature flags for the specified project.', type: [FlagDto] })
     @Get()
     async getFeatureFlagsForProject(
         @AuthUser() user: AuthUserDto,
@@ -29,6 +30,7 @@ export class FeatureFlagsController {
     @ApiOperation({ summary: 'Get a specific feature flag for a project' })
     @ApiBearerAuth()
     @UseGuards(JwtGuard)
+    @ApiResponse({ status: 200, description: 'The feature flag with the specified key.', type: FlagDto })
     @Get(":featureFlagKey")
     async getFeatureFlagByIdForProject(
         @AuthUser() user: AuthUserDto,

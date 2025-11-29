@@ -9,7 +9,7 @@ export class AuthenticationController {
     constructor(private readonly authService: AuthenticationService) { }
 
     @ApiOperation({ summary: 'User login' })
-    @ApiResponse({ status: 200, description: 'The user has been successfully logged in.' })
+    @ApiResponse({ status: 200, description: 'The user has been successfully logged in.', type: LoginSuccessDto })
     @Post('login')
     async login(@Body() loginDto: LoginDto): Promise<LoginSuccessDto> {
         const maybeTokens = await this.authService.authenticateEmailPassword(loginDto.email, loginDto.password);
@@ -22,7 +22,7 @@ export class AuthenticationController {
     }
 
     @ApiOperation({ summary: 'User registration' })
-    @ApiResponse({ status: 201, description: 'The user has been successfully registered.' })
+    @ApiResponse({ status: 201, description: 'The user has been successfully registered.', type: LoginSuccessDto })
     @Post('register')
     async register(@Body() registerDto: LoginDto): Promise<LoginSuccessDto> {
         return this.authService.registerEmailPassword(registerDto.email, registerDto.password);
