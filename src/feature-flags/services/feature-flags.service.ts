@@ -72,7 +72,7 @@ export class FeatureFlagsService {
         const featureFlag = await this.featureFlagsRepository.findOne({
             project: { id: projectId },
             key: featureFlagKey
-        });
+        }, { populate: ['variations', 'defaultVariation'] });
 
         if (!featureFlag) {
             throw new FeatureFlagNotFound(featureFlagKey);
