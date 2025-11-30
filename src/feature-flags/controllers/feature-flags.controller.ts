@@ -1,9 +1,9 @@
-import { BadRequestException, Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, NotFoundException, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthUser, AuthUserDto, JwtGuard } from 'src/authentication';
 import { FeatureFlagsService } from '../services/feature-flags.service';
 import { CreateFeatureFlagDto, FlagDto, UpdateFeatureFlagDto } from '../dtos';
-import { FeatureFlagWithKeyAlreadyExistsError } from '../errors';
+import { FeatureFlagNotFound, FeatureFlagWithKeyAlreadyExistsError } from '../errors';
 import { EvaluationService, RulesService } from 'src/rules/services';
 
 @ApiTags('feature-flags')
@@ -31,18 +31,26 @@ export class FeatureFlagsController {
     @ApiBearerAuth()
     @UseGuards(JwtGuard)
     @ApiResponse({ status: 200, description: 'The feature flag with the specified key.', type: FlagDto })
+    @ApiResponse({ status: 404, description: 'Feature flag not found.' })
     @Get(":featureFlagKey")
     async getFeatureFlagByIdForProject(
         @AuthUser() user: AuthUserDto,
         @Param('projectId') projectId: string,
         @Param('featureFlagKey') featureFlagKey: string
     ) {
-        return this.featureFlagsService.getFeatureFlagByKeyForProject(user.id, projectId, featureFlagKey);
+        try {
+            return this.featureFlagsService.getFeatureFlagByKeyForProject(user.id, projectId, featureFlagKey);
+        } catch (error: unknown) {
+            if (error instanceof FeatureFlagNotFound) {
+                throw new NotFoundException(error.message);
+            }
+        }
     }
 
     @ApiOperation({ summary: 'Create a new feature flag for a project' })
     @ApiBearerAuth()
     @UseGuards(JwtGuard)
+    @ApiResponse({ status: 201, description: 'The feature flag has been successfully created.', type: FlagDto })
     @Post()
     async createFeatureFlagForProject(
         @AuthUser() user: AuthUserDto,
